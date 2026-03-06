@@ -1,0 +1,396 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Extra Fooding - Sentra Kas RBB Operation Bandung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #FF5841;
+            --primary-pink: #C53678;
+            --pure-white: #FFFFFF;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            /* Menyembunyikan Bagian I saat cetak sesuai permintaan */
+            .print-hide-section {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+            }
+            .print-container {
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .print-mt-0 {
+                margin-top: 0 !important;
+            }
+            table {
+                font-size: 10pt;
+            }
+        }
+        .custom-checkbox {
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+            accent-color: var(--primary-pink);
+        }
+        .gradient-header {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-pink) 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-10 text-slate-800">
+
+    <div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print-container border border-slate-100">
+        <!-- Header Aplikasi -->
+        <div class="gradient-header p-8 text-white no-print">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight italic uppercase">Extra Fooding Manager</h1>
+                    <p class="text-white/80 mt-1 font-medium italic">Sentra Kas RBB Operation Bandung</p>
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-3">
+                    <div class="flex bg-white/10 rounded-xl p-1 border border-white/20 backdrop-blur-sm">
+                        <button onclick="exportData()" class="hover:bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all text-xs font-bold uppercase tracking-wider">
+                            Backup
+                        </button>
+                        <button onclick="document.getElementById('fileInput').click()" class="hover:bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all text-xs font-bold uppercase tracking-wider">
+                            Muat Data
+                        </button>
+                        <input type="file" id="fileInput" class="hidden" accept=".json" onchange="importData(event)">
+                    </div>
+
+                    <button onclick="window.print()" class="bg-white text-[#C53678] hover:bg-slate-50 px-5 py-2 rounded-xl flex items-center gap-2 transition-all font-bold shadow-lg shadow-black/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Cetak Rekap (Bagian II)
+                    </button>
+                    
+                    <button onclick="clearAttendance()" class="bg-black/20 hover:bg-black/40 text-white px-4 py-2 rounded-xl transition-all font-semibold text-xs uppercase">
+                        Reset Absen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8 print-container">
+            <!-- Form Input & Config -->
+            <div class="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-6 no-print">
+                <div class="lg:col-span-2 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Input Data Pegawai</h2>
+                    <div class="flex gap-3">
+                        <input type="text" id="employeeName" placeholder="Ketik nama lengkap pegawai..." 
+                               class="flex-1 p-3 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-pink-100 focus:border-[#C53678] outline-none transition-all shadow-sm font-medium">
+                        <button onclick="addEmployee()" 
+                                class="bg-[#C53678] hover:bg-[#a32a61] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-pink-700/20 transition-all transform active:scale-95">
+                            Tambah
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-orange-50 rounded-2xl border border-orange-100">
+                    <h2 class="text-[10px] font-black text-[#FF5841] uppercase tracking-widest mb-4">Biaya Per Hari (Rp)</h2>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#FF5841]">Rp</span>
+                        <input type="number" id="dailyRateInput" oninput="updateDailyRate(this.value)"
+                               class="w-full p-3 pl-12 bg-white border border-orange-200 rounded-xl focus:ring-4 focus:ring-orange-100 focus:border-[#FF5841] outline-none transition-all shadow-sm font-bold text-slate-800" 
+                               value="20000">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Identitas Laporan Formal -->
+            <div class="mb-10 text-center print-mt-0">
+                <h2 class="text-2xl font-black uppercase tracking-tight text-slate-900 border-b-4 border-[#C53678] pb-3 mb-8 inline-block w-full">
+                    LAPORAN REKAPITULASI EXTRA FOODING
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-col gap-1 text-left">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rentang Periode</label>
+                        <input type="text" id="dateRange" oninput="updatePeriodDisplay()" 
+                               class="text-lg font-bold bg-transparent border-b-2 border-slate-100 focus:border-[#C53678] outline-none py-1 transition-all" value="03 - 06">
+                    </div>
+                    <div class="flex flex-col gap-1 text-left">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bulan / Tahun</label>
+                        <input type="text" id="monthYear" oninput="updatePeriodDisplay()" 
+                               class="text-lg font-bold bg-transparent border-b-2 border-slate-100 focus:border-[#C53678] outline-none py-1 transition-all" value="Maret 2024">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian I: Daftar Hadir (DISEMBUNYIKAN SAAT CETAK) -->
+            <div class="mb-12 print-hide-section">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="bg-[#C53678] text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold shadow-md shadow-pink-700/20 text-sm italic">I</span>
+                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Daftar Hadir & Nominal Per Pegawai (Hanya Tampilan Layar)</h3>
+                </div>
+                
+                <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-sm overflow-x-auto bg-white">
+                    <table class="w-full border-collapse text-center">
+                        <thead class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
+                            <tr>
+                                <th class="border-b border-slate-200 p-4 w-12">No</th>
+                                <th class="border-b border-slate-200 p-4 text-left min-w-[200px]">Nama Pegawai</th>
+                                <th class="border-b border-slate-200 p-4 w-16">Sen</th>
+                                <th class="border-b border-slate-200 p-4 w-16">Sel</th>
+                                <th class="border-b border-slate-200 p-4 w-16">Rab</th>
+                                <th class="border-b border-slate-200 p-4 w-16">Kam</th>
+                                <th class="border-b border-slate-200 p-4 w-16">Jum</th>
+                                <th class="border-b border-slate-200 p-4 bg-pink-50/30 w-24">Hadir</th>
+                                <th class="border-b border-slate-200 p-4 text-right bg-pink-50/30 w-36">Total (Rp)</th>
+                                <th class="border-b border-slate-200 p-4 no-print w-16">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceBody" class="text-sm divide-y divide-slate-100">
+                        </tbody>
+                        <tfoot class="bg-slate-50/80 font-black text-sm">
+                            <tr>
+                                <td colspan="7" class="p-5 text-right text-slate-400">TOTAL KESELURUHAN</td>
+                                <td id="grandTotalHadir" class="p-5 bg-pink-50 text-[#C53678] border-x border-slate-200">0</td>
+                                <td id="grandTotalNominal" class="p-5 text-right text-[#C53678] text-base bg-pink-50/50">Rp 0</td>
+                                <td class="p-5 no-print"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Bagian II: Rekap Periode (UTAMA UNTUK DICETAK) -->
+            <div class="mb-14">
+                <div class="flex items-center gap-3 mb-4 no-print">
+                    <span class="bg-[#FF5841] text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold shadow-md shadow-orange-700/20 text-sm italic">II</span>
+                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Rekapitulasi Per Periode <span id="periodSubtitle" class="text-[#C53678] underline ml-1"></span></h3>
+                </div>
+
+                <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-sm overflow-x-auto bg-white print:border-slate-300">
+                    <table class="w-full border-collapse text-center">
+                        <thead class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase print:bg-slate-100">
+                            <tr>
+                                <th class="border-b border-slate-200 p-4 w-12">No</th>
+                                <th class="border-b border-slate-200 p-4 text-left">Hari / Tanggal</th>
+                                <th class="border-b border-slate-200 p-4">Jumlah Hadir (Orang)</th>
+                                <th class="border-b border-slate-200 p-4">Biaya Satuan (Rp)</th>
+                                <th class="border-b border-slate-200 p-4 text-right">Sub Total (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyRecapBody" class="text-sm divide-y divide-slate-100 font-medium print:divide-slate-200">
+                        </tbody>
+                        <tfoot class="bg-gradient-to-r from-[#FF5841] to-[#C53678] text-white font-black print:from-slate-800 print:to-slate-900">
+                            <tr>
+                                <td colspan="4" class="p-5 text-right uppercase tracking-widest text-white/70 text-[10px] print:text-white/90">Total Dana Mingguan</td>
+                                <td id="recapGrandTotal" class="p-5 text-right text-lg">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Signature Area (Hanya Muncul Saat Cetak) -->
+            <div class="hidden print:grid grid-cols-2 gap-12 mt-20">
+                <div class="text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-20">Dibuat Oleh,</p>
+                    <p class="font-bold underline uppercase text-sm mb-1 text-slate-900">( ____________________ )</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Admin Personalia</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-20">Mengetahui / Menyetujui,</p>
+                    <p class="font-bold underline uppercase text-sm mb-1 text-slate-900">( ____________________ )</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Kepala Bagian</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="hidden print:block text-center text-[9px] text-slate-400 pb-6 border-t border-slate-100 pt-6 italic mt-10">
+            Dicetak secara otomatis melalui Sistem Manajemen Extra Fooding • Sentra Kas RBB Operation Bandung
+        </div>
+    </div>
+
+    <script>
+        const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+        
+        let dailyRate = parseInt(localStorage.getItem('ef_daily_rate')) || 20000;
+        let employees = JSON.parse(localStorage.getItem('ef_employees')) || [
+            { id: 1, name: 'BUDI SANTOSO', attendance: [false, false, false, false, false] },
+            { id: 2, name: 'SITI AMINAH', attendance: [false, false, false, false, false] }
+        ];
+
+        document.getElementById('dailyRateInput').value = dailyRate;
+
+        function updateDailyRate(val) {
+            const num = parseInt(val);
+            if (!isNaN(num)) {
+                dailyRate = num;
+                localStorage.setItem('ef_daily_rate', dailyRate);
+                renderTable();
+            }
+        }
+
+        function updatePeriodDisplay() {
+            const dateRange = document.getElementById('dateRange').value;
+            const monthYear = document.getElementById('monthYear').value;
+            document.getElementById('periodSubtitle').innerText = `${dateRange} ${monthYear}`.toUpperCase();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('ef_employees', JSON.stringify(employees));
+            renderTable();
+        }
+
+        function addEmployee() {
+            const nameInput = document.getElementById('employeeName');
+            const name = nameInput.value.trim();
+            if (name) {
+                employees.push({
+                    id: Date.now(),
+                    name: name.toUpperCase(),
+                    attendance: [false, false, false, false, false]
+                });
+                nameInput.value = '';
+                saveAndRender();
+            }
+        }
+
+        function deleteEmployee(id) {
+            if(confirm('Hapus data pegawai ini?')) {
+                employees = employees.filter(emp => emp.id !== id);
+                saveAndRender();
+            }
+        }
+
+        function toggleAttendance(empId, dayIndex) {
+            const emp = employees.find(e => e.id === empId);
+            if (emp) {
+                emp.attendance[dayIndex] = !emp.attendance[dayIndex];
+                saveAndRender();
+            }
+        }
+
+        function clearAttendance() {
+            if(confirm('Reset semua data hadir minggu ini?')) {
+                employees = employees.map(emp => ({
+                    ...emp,
+                    attendance: [false, false, false, false, false]
+                }));
+                saveAndRender();
+            }
+        }
+
+        function exportData() {
+            const dataToExport = {
+                version: '1.0',
+                dailyRate: dailyRate,
+                employees: employees,
+                dateRange: document.getElementById('dateRange').value,
+                monthYear: document.getElementById('monthYear').value,
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Backup_EF_${new Date().getTime()}.json`;
+            a.click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.employees) {
+                        employees = data.employees;
+                        dailyRate = data.dailyRate || 20000;
+                        document.getElementById('dailyRateInput').value = dailyRate;
+                        renderTable();
+                    }
+                } catch (err) { alert('File tidak valid'); }
+            };
+            reader.readAsText(file);
+        }
+
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('attendanceBody');
+            tbody.innerHTML = '';
+            let totalSemuaNominal = 0;
+            let totalSemuaHadir = 0;
+            let dailyCounts = [0, 0, 0, 0, 0];
+
+            employees.forEach((emp, index) => {
+                const totalHadir = emp.attendance.filter((a, dIdx) => {
+                    if(a) dailyCounts[dIdx]++;
+                    return a;
+                }).length;
+                
+                const nominal = totalHadir * dailyRate;
+                totalSemuaNominal += nominal;
+                totalSemuaHadir += totalHadir;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-pink-50/20 transition-colors group";
+                row.innerHTML = `
+                    <td class="p-4 text-slate-300 font-bold text-xs">${index + 1}</td>
+                    <td class="p-4 text-left font-bold text-slate-700 uppercase tracking-tight">${emp.name}</td>
+                    ${emp.attendance.map((status, dIdx) => `
+                        <td class="p-4">
+                            <input type="checkbox" ${status ? 'checked' : ''} onchange="toggleAttendance(${emp.id}, ${dIdx})" class="custom-checkbox rounded shadow-sm">
+                        </td>`).join('')}
+                    <td class="p-4 font-black bg-pink-50/20 text-[#C53678]">${totalHadir}</td>
+                    <td class="p-4 text-right font-black bg-pink-50/20 text-[#C53678]">${formatRupiah(nominal)}</td>
+                    <td class="p-4 no-print text-center">
+                        <button onclick="deleteEmployee(${emp.id})" class="text-slate-200 hover:text-[#FF5841] transition-opacity opacity-0 group-hover:opacity-100">Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('grandTotalHadir').innerText = totalSemuaHadir;
+            document.getElementById('grandTotalNominal').innerText = formatRupiah(totalSemuaNominal);
+
+            const dailyRecapBody = document.getElementById('dailyRecapBody');
+            dailyRecapBody.innerHTML = '';
+            dailyCounts.forEach((count, i) => {
+                const dayNominal = count * dailyRate;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-4 text-slate-300 font-bold text-xs">${i + 1}</td>
+                    <td class="p-4 text-left font-bold text-slate-700">${DAYS[i]}</td>
+                    <td class="p-4 font-bold text-slate-600">${count} Orang</td>
+                    <td class="p-4 text-slate-400 font-medium italic">${formatRupiah(dailyRate)}</td>
+                    <td class="p-4 text-right font-black text-[#C53678] print:text-slate-900">${formatRupiah(dayNominal)}</td>
+                `;
+                dailyRecapBody.appendChild(row);
+            });
+
+            document.getElementById('recapGrandTotal').innerText = formatRupiah(totalSemuaNominal);
+            updatePeriodDisplay();
+        }
+
+        renderTable();
+    </script>
+</body>
+</html>
